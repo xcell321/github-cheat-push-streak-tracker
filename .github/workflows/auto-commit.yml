@@ -1,0 +1,42 @@
+name: Daily Auto Commit
+
+on:
+  schedule:
+    # 12:00 AM PHT (UTC+8) = 16:00 UTC
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Manila
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Increment cheat counter
+        id: counter
+        run: |
+          line=$(grep -m1 'git commit -m "cheat:' README.md)
+          tens=$(echo "$line" | grep -oE '\[[0-9]+\]' | sed -n 1p | tr -d '[]')
+          units=$(echo "$line" | grep -oE '\[[0-9]+\]' | sed -n 2p | tr -d '[]')
+          units=$((units + 1))
+          if [ "$units" -gt 9 ]; then
+            units=0
+            tens=$((tens + 1))
+          fi
+          new="[$tens][$units]"
+          sed -i "s/cheat: \[[0-9]*\]\[[0-9]*\]/cheat: ${new}/" README.md
+          echo "counter=$new" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and Push
+        run: |
+          git config user.name "edsielursal22-dot"
+          git config user.email "edsielursal39@gmail.com"
+          git add README.md
+          git commit -m "cheat${{ steps.counter.outputs.counter }}: auto push (busy day)" || exit 0
+          git push
