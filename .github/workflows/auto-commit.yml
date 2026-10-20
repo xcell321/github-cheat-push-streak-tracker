@@ -2,12 +2,21 @@ name: Daily Auto Commit
 
 on:
   schedule:
-    # 12:00 AM PHT (UTC+8) = 16:00 UTC
-    - cron: '0 16 * * *'
+    # Backup slots para bisan ug delayed/dropped ang usa, naa pay lain.
+    # Offset minutes (dili :00) kay high-load ang top-of-hour sa GitHub.
+    # 12:23 AM PHT, 6:23 AM, 12:23 PM, 6:23 PM
+    - cron: '23 16 * * *'
+    - cron: '23 22 * * *'
+    - cron: '23 4 * * *'
+    - cron: '23 10 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: auto-commit
+  cancel-in-progress: false
 
 jobs:
   auto-commit:
@@ -17,8 +26,24 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if already committed today
+        id: check
+        run: |
+          today=$(date +%Y-%m-%d)
+          last=$(git log --grep='auto push' -1 --format='%cd' --date=format-local:'%Y-%m-%d')
+          if [ "$last" = "$today" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Already pushed today ($today), skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "No push yet today ($today)."
+          fi
 
       - name: Increment cheat counter
+        if: steps.check.outputs.skip == 'false'
         id: counter
         run: |
           line=$(grep -m1 'git commit -m "cheat:' README.md)
@@ -34,6 +59,7 @@ jobs:
           echo "counter=$new" >> "$GITHUB_OUTPUT"
 
       - name: Commit and Push
+        if: steps.check.outputs.skip == 'false'
         run: |
           git config user.name "edsielursal22-dot"
           git config user.email "edsielursal39@gmail.com"
