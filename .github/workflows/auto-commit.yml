@@ -4,8 +4,10 @@ on:
   schedule:
     # Backup slots para bisan ug delayed/dropped ang usa, naa pay lain.
     # Offset minutes (dili :00) kay high-load ang top-of-hour sa GitHub.
-    # 12:23 AM PHT, 6:23 AM, 12:23 PM, 6:23 PM
-    - cron: '23 16 * * *'
+    # 12:07 AM, 12:37 AM, 2:07 AM, 6:23 AM, 12:23 PM, 6:23 PM (PHT)
+    - cron: '7 16 * * *'
+    - cron: '37 16 * * *'
+    - cron: '7 18 * * *'
     - cron: '23 22 * * *'
     - cron: '23 4 * * *'
     - cron: '23 10 * * *'
