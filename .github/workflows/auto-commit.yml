@@ -66,5 +66,9 @@ jobs:
           git config user.name "xcell321"
           git config user.email "edsielursal39@gmail.com"
           git add README.md
-          git commit -m "cheat${{ steps.counter.outputs.counter }}: auto push (busy day)" || exit 0
+          # I-force ang timestamp ngadto sa 12:00 AM PHT sa today,
+          # bisan pa ug delayed mo-run ang workflow (GitHub cron lag).
+          midnight="$(date -d "$(date +%Y-%m-%d) 00:00:00" --iso-8601=seconds)"
+          GIT_AUTHOR_DATE="$midnight" GIT_COMMITTER_DATE="$midnight" \
+            git commit -m "cheat${{ steps.counter.outputs.counter }}: auto push (busy day)" || exit 0
           git push
